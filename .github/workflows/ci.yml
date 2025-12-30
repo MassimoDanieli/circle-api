@@ -1,25 +1,9 @@
-me: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-              # ------------------------------------------------------------
-              #       # Login a GitHub Container Registry
-              #             # ------------------------------------------------------------
-              #                   - name: Log in to GHCR
-              #                           uses: docker/login-action@v3
-              #                                   with:
-              #                                             registry: ghcr.io
-              #                                                       username: ${{ github.actor }}
-              #                                                                 password: ${{ secrets.GITHUB_TOKEN }}
-              #
-              #                                                                       # ------------------------------------------------------------
-              #                                                                             # Build + push per Pull Request (solo tag SHA)
-              #                                                                                   # ------------------------------------------------------------
-              #                                                                                         - name: Build and push (PR)
-              #                                                                                                 if: ${{ github.event_name name: CI
+name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -28,24 +12,30 @@ jobs:
 
     permissions:
       contents: read
-      packages: write   # necessario per push su GHCR
+      packages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ------------------------------------------------------------
-      # Calcola il nome immagine in lowercase (GHCR lo richiede)
-      # ------------------------------------------------------------
       - name: Compute image name (lowercase)
         id: img
         shell: bash
         run: |
           echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-      # ------------------------------------------------------------
-      # Setup Docker Buildx
-      # ---------== 'pull_request' }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (PR)
+        if: ${{ github.event_name == 'pull_request' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -53,9 +43,6 @@ jobs:
           tags: |
             ${{ steps.img.outputs.image }}:sha-${{ github.sha }}
 
-      # ------------------------------------------------------------
-      # Build + push per main (tag main + SHA)
-      # ------------------------------------------------------------
       - name: Build and push (main)
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v6
