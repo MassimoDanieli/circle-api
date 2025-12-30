@@ -33,6 +33,7 @@ jobs:
           context: .
           push: true
           tags: |
+            ghcr.io/${{ github.repository }}:main
             ghcr.io/${{ github.repository_owner }}/circle-api:sha-${{ github.sha }}
 
       - name: Build and push (main)
