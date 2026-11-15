@@ -9,3 +9,8 @@ build/
 *.egg-info/
 .DS_Store
 
+
+# editor files
+*~
+*.swp
+.*.un~
